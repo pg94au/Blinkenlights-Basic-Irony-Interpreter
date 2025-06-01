@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blinkenlights.Basic.App", "Blinkenlights.Basic.App\Blinkenlights.Basic.App.csproj", "{EAC283E1-0A26-40EE-B7A8-DC76310D01FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blinkenlights.Basic.Tests", "Blinkenlights.Basic.Tests\Blinkenlights.Basic.Tests.csproj", "{65468776-E075-5CE8-D637-3EADF32326EE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EAC283E1-0A26-40EE-B7A8-DC76310D01FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAC283E1-0A26-40EE-B7A8-DC76310D01FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAC283E1-0A26-40EE-B7A8-DC76310D01FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAC283E1-0A26-40EE-B7A8-DC76310D01FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65468776-E075-5CE8-D637-3EADF32326EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65468776-E075-5CE8-D637-3EADF32326EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65468776-E075-5CE8-D637-3EADF32326EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65468776-E075-5CE8-D637-3EADF32326EE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {34E24C55-8FDB-4BFB-8A42-AD1ADD640369}
+	EndGlobalSection
+EndGlobal
