@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices.ObjectiveC;
-using Blinkenlights.Basic.App.Equations;
+﻿using Blinkenlights.Basic.App.Equations;
 using Blinkenlights.Basic.App.Expressions;
 using Blinkenlights.Basic.App.Statements;
 using Irony;
@@ -8,20 +7,20 @@ using Irony.Parsing;
 namespace Blinkenlights.Basic.App;
 public class StatementParser
 {
-    private readonly Dictionary<string, IStatementParser> _statementParsers = new Dictionary<string, IStatementParser>
+    private readonly Dictionary<string, Func<ParseTreeNode, IStatement>> _statementParseFuncs = new()
     {
-        {"endStatement", new EndStatementParser()},
-        {"forStatement", new ForStatementParser()},
-        {"gosubStatement", new GosubStatementParser()},
-        {"gotoStatement", new GotoStatementParser()},
-        {"ifStatement", new IfStatementParser()},
-        {"inputStatement", new InputStatementParser()},
-        {"letStatement", new LetStatementParser()},
-        {"nextStatement", new NextStatementParser()},
-        {"printStatement", new PrintStatementParser()},
-        {"returnStatement", new ReturnStatementParser()}
+        { "endStatement", ParseEndStatement },
+        { "forStatement", ParseForStatement },
+        { "gosubStatement", ParseGosubStatement },
+        { "gotoStatement", ParseGotoStatement },
+        { "ifStatement", ParseIfStatement },
+        { "inputStatement", ParseInputStatement },
+        { "letStatement", ParseLetStatement },
+        { "nextStatement", ParseNextStatement },
+        { "printStatement", ParsePrintStatement },
+        { "returnStatement", ParseReturnStatement }
     };
-
+    
     public SortedDictionary<int, IStatement>? Parse(string source, TextWriter output, TextWriter error)
     {
         var grammar = new BasicGrammar();
@@ -80,11 +79,92 @@ public class StatementParser
         var statementNode = node.ChildNodes[1];
 
         var lineNumber = LineNumberParser.Parse(lineNumberNode);
-        var statementParser = _statementParsers[statementNode.ChildNodes[0].Term.Name];
+        var statementParseFunc = _statementParseFuncs[statementNode.ChildNodes[0].Term.Name];
 
-        var statement = statementParser.Parse(statementNode.ChildNodes[0]);
+        var statement = statementParseFunc(statementNode.ChildNodes[0]);
 
         statements[lineNumber] = statement;
+    }
+
+    public static IStatement ParseEndStatement(ParseTreeNode node)
+    {
+        return new EndStatement();
+    }
+
+    public static IStatement ParseForStatement(ParseTreeNode node)
+    {
+        var variableNode = node.ChildNodes[1];
+        var startValueNode = node.ChildNodes[3];
+        var toValueNode = node.ChildNodes[5];
+        var variableName = variableNode.Token.ValueString;
+        var startValue = int.Parse(startValueNode.Token.ValueString);
+        var toValue = int.Parse(toValueNode.Token.ValueString);
+
+        return new ForStatement(variableName, startValue, toValue);
+    }
+
+    public static IStatement ParseGosubStatement(ParseTreeNode node)
+    {
+        var gosubLineNumberNode = node.ChildNodes[1];
+        var gosubLineNumber = int.Parse(gosubLineNumberNode.Token.ValueString);
+
+        return new GosubStatement(gosubLineNumber);
+    }
+
+    public static IStatement ParseGotoStatement(ParseTreeNode node)
+    {
+        var gotoLineNumberNode = node.ChildNodes[1];
+        var gotoLineNumber = int.Parse(gotoLineNumberNode.Token.ValueString);
+
+        return new GotoStatement(gotoLineNumber);
+    }
+
+    public static IStatement ParseIfStatement(ParseTreeNode node)
+    {
+        var equationNode = node.ChildNodes[1];
+        var targetLineNumberNode = node.ChildNodes[3];
+        var equation = EquationParser.Parse(equationNode);
+        var targetLineNumber = int.Parse(targetLineNumberNode.Token.ValueString);
+
+        return new IfStatement(equation, targetLineNumber);
+    }
+
+    public static IStatement ParseInputStatement(ParseTreeNode node)
+    {
+        var variableNode = node.ChildNodes[1];
+        var variableName = variableNode.Token.ValueString;
+
+        return new InputStatement(variableName);
+    }
+
+    public static IStatement ParseLetStatement(ParseTreeNode node)
+    {
+        var variableNode = node.ChildNodes[1];
+        var expressionNode = node.ChildNodes[3];
+        var variableName = variableNode.Token.ValueString;
+        var expression = ExpressionParser.Parse(expressionNode);
+
+        return new LetStatement(variableName, expression);
+    }
+
+    public static IStatement ParseNextStatement(ParseTreeNode node)
+    {
+        var variableNode = node.ChildNodes[1];
+        var variableName = variableNode.Token.ValueString;
+
+        return new NextStatement(variableName);
+    }
+
+    public static IStatement ParsePrintStatement(ParseTreeNode node)
+    {
+        var printArguments = PrintArgumentParser.Parse(node.ChildNodes[1]);
+
+        return new PrintStatement(printArguments);
+    }
+
+    public static IStatement ParseReturnStatement(ParseTreeNode node)
+    {
+        return new ReturnStatement();
     }
 }
 
@@ -104,64 +184,6 @@ public class LineNumberParser
 public interface IStatementParser
 {
     IStatement Parse(ParseTreeNode node);
-}
-
-public class EndStatementParser : IStatementParser
-{
-    public IStatement Parse(ParseTreeNode node)
-    {
-        return new EndStatement();
-    }
-}
-
-public class ForStatementParser : IStatementParser
-{
-    public IStatement Parse(ParseTreeNode node)
-    {
-        var variableNode = node.ChildNodes[1];
-        var startValueNode = node.ChildNodes[3];
-        var toValueNode = node.ChildNodes[5];
-        var variableName = variableNode.Token.ValueString;
-        var startValue = int.Parse(startValueNode.Token.ValueString);
-        var toValue = int.Parse(toValueNode.Token.ValueString);
-
-        return new ForStatement(variableName, startValue, toValue);
-    }
-}
-
-public class GosubStatementParser : IStatementParser
-{
-    public IStatement Parse(ParseTreeNode node)
-    {
-        var gosubLineNumberNode = node.ChildNodes[1];
-        var gosubLineNumber = int.Parse(gosubLineNumberNode.Token.ValueString);
-
-        return new GosubStatement(gosubLineNumber);
-    }
-}
-
-public class GotoStatementParser : IStatementParser
-{
-    public IStatement Parse(ParseTreeNode node)
-    {
-        var gotoLineNumberNode = node.ChildNodes[1];
-        var gotoLineNumber = int.Parse(gotoLineNumberNode.Token.ValueString);
-
-        return new GotoStatement(gotoLineNumber);
-    }
-}
-
-public class IfStatementParser : IStatementParser
-{
-    public IStatement Parse(ParseTreeNode node)
-    {
-        var equationNode = node.ChildNodes[1];
-        var targetLineNumberNode = node.ChildNodes[3];
-        var equation = EquationParser.Parse(equationNode);
-        var targetLineNumber = int.Parse(targetLineNumberNode.Token.ValueString);
-
-        return new IfStatement(equation, targetLineNumber);
-    }
 }
 
 public class EquationParser
@@ -186,30 +208,6 @@ public class EquationParser
             ">=" => new GreaterThanOrEqualEquation(leftExpression, rightExpression),
             _ => throw new NotImplementedException($"Unknown operator: {inequality}")
         };
-    }
-}
-
-public class InputStatementParser : IStatementParser
-{
-    public IStatement Parse(ParseTreeNode node)
-    {
-        var variableNode = node.ChildNodes[1];
-        var variableName = variableNode.Token.ValueString;
-
-        return new InputStatement(variableName);
-    }
-}
-
-public class LetStatementParser : IStatementParser
-{
-    public IStatement Parse(ParseTreeNode node)
-    {
-        var variableNode = node.ChildNodes[1];
-        var expressionNode = node.ChildNodes[3];
-        var variableName = variableNode.Token.ValueString;
-        var expression = ExpressionParser.Parse(expressionNode);
-
-        return new LetStatement(variableName, expression);
     }
 }
 
@@ -255,27 +253,6 @@ public class ExpressionParser
         }
         
         throw new NotImplementedException();
-    }
-}
-
-public class NextStatementParser : IStatementParser
-{
-    public IStatement Parse(ParseTreeNode node)
-    {
-        var variableNode = node.ChildNodes[1];
-        var variableName = variableNode.Token.ValueString;
-
-        return new NextStatement(variableName);
-    }
-}
-
-public class PrintStatementParser : IStatementParser
-{
-    public IStatement Parse(ParseTreeNode node)
-    {
-        var printArguments = PrintArgumentParser.Parse(node.ChildNodes[1]);
-
-        return new PrintStatement(printArguments);
     }
 }
 
@@ -326,13 +303,5 @@ public class PrintArgumentParser
         }
 
         return printArguments.ToArray();
-    }
-}
-
-public class ReturnStatementParser : IStatementParser
-{
-    public IStatement Parse(ParseTreeNode node)
-    {
-        return new ReturnStatement();
     }
 }
