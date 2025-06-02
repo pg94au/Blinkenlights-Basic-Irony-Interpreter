@@ -62,28 +62,18 @@ public class StatementParser
 
         foreach (var node in root.ChildNodes)
         {
-            switch (node.Term.Name)
-            {
-                case "line":
-                    ParseLine(node, statements);
-                    break;
-            }
+            var lineNumberNode = node.ChildNodes[0];
+            var statementNode = node.ChildNodes[1];
+
+            var lineNumber = ParseLineNumber(lineNumberNode);
+            var statementParseFunc = _statementParseFuncs[statementNode.ChildNodes[0].Term.Name];
+
+            var statement = statementParseFunc(statementNode.ChildNodes[0]);
+
+            statements[lineNumber] = statement;
         }
 
         return statements;
-    }
-
-    private void ParseLine(ParseTreeNode node, SortedDictionary<int, IStatement> statements)
-    {
-        var lineNumberNode = node.ChildNodes[0];
-        var statementNode = node.ChildNodes[1];
-
-        var lineNumber = ParseLineNumber(lineNumberNode);
-        var statementParseFunc = _statementParseFuncs[statementNode.ChildNodes[0].Term.Name];
-
-        var statement = statementParseFunc(statementNode.ChildNodes[0]);
-
-        statements[lineNumber] = statement;
     }
 
     private static int ParseLineNumber(ParseTreeNode node)

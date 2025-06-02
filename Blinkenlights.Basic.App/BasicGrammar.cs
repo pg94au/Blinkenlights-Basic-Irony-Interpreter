@@ -102,7 +102,7 @@ public class BasicGrammar : Grammar
             Rule = ToTerm("RETURN")
         };
 
-        var statement = new NonTerminal("statement")
+        var statement = new NonTerminal(Statement)
         {
             Rule = endStatement |
                    forStatement |
@@ -116,7 +116,7 @@ public class BasicGrammar : Grammar
                    returnStatement
         };
 
-        var lineNum = new NonTerminal("lineNum")
+        var lineNum = new NonTerminal(LineNumber)
         {
             Rule = integerValue
         };
@@ -131,4 +131,7 @@ public class BasicGrammar : Grammar
 
         Root = program;
     }
+    
+    public static string LineNumber => "lineNum";
+    public static string Statement => "statement";
 }
