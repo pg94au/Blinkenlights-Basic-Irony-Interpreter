@@ -78,7 +78,7 @@ public class StatementParser
         var lineNumberNode = node.ChildNodes[0];
         var statementNode = node.ChildNodes[1];
 
-        var lineNumber = LineNumberParser.Parse(lineNumberNode);
+        var lineNumber = ParseLineNumber(lineNumberNode);
         var statementParseFunc = _statementParseFuncs[statementNode.ChildNodes[0].Term.Name];
 
         var statement = statementParseFunc(statementNode.ChildNodes[0]);
@@ -86,12 +86,21 @@ public class StatementParser
         statements[lineNumber] = statement;
     }
 
-    public static IStatement ParseEndStatement(ParseTreeNode node)
+    private static int ParseLineNumber(ParseTreeNode node)
+    {
+        var lineNumberNode = node.ChildNodes[0];
+
+        var lineNumber = int.Parse(lineNumberNode.Token.ValueString);
+
+        return lineNumber;
+    }
+
+    private static IStatement ParseEndStatement(ParseTreeNode node)
     {
         return new EndStatement();
     }
 
-    public static IStatement ParseForStatement(ParseTreeNode node)
+    private static IStatement ParseForStatement(ParseTreeNode node)
     {
         var variableNode = node.ChildNodes[1];
         var startValueNode = node.ChildNodes[3];
@@ -103,7 +112,7 @@ public class StatementParser
         return new ForStatement(variableName, startValue, toValue);
     }
 
-    public static IStatement ParseGosubStatement(ParseTreeNode node)
+    private static IStatement ParseGosubStatement(ParseTreeNode node)
     {
         var gosubLineNumberNode = node.ChildNodes[1];
         var gosubLineNumber = int.Parse(gosubLineNumberNode.Token.ValueString);
@@ -111,7 +120,7 @@ public class StatementParser
         return new GosubStatement(gosubLineNumber);
     }
 
-    public static IStatement ParseGotoStatement(ParseTreeNode node)
+    private static IStatement ParseGotoStatement(ParseTreeNode node)
     {
         var gotoLineNumberNode = node.ChildNodes[1];
         var gotoLineNumber = int.Parse(gotoLineNumberNode.Token.ValueString);
@@ -119,17 +128,17 @@ public class StatementParser
         return new GotoStatement(gotoLineNumber);
     }
 
-    public static IStatement ParseIfStatement(ParseTreeNode node)
+    private static IStatement ParseIfStatement(ParseTreeNode node)
     {
         var equationNode = node.ChildNodes[1];
         var targetLineNumberNode = node.ChildNodes[3];
-        var equation = EquationParser.Parse(equationNode);
+        var equation = ParseEquation(equationNode);
         var targetLineNumber = int.Parse(targetLineNumberNode.Token.ValueString);
 
         return new IfStatement(equation, targetLineNumber);
     }
 
-    public static IStatement ParseInputStatement(ParseTreeNode node)
+    private static IStatement ParseInputStatement(ParseTreeNode node)
     {
         var variableNode = node.ChildNodes[1];
         var variableName = variableNode.Token.ValueString;
@@ -137,17 +146,17 @@ public class StatementParser
         return new InputStatement(variableName);
     }
 
-    public static IStatement ParseLetStatement(ParseTreeNode node)
+    private static IStatement ParseLetStatement(ParseTreeNode node)
     {
         var variableNode = node.ChildNodes[1];
         var expressionNode = node.ChildNodes[3];
         var variableName = variableNode.Token.ValueString;
-        var expression = ExpressionParser.Parse(expressionNode);
+        var expression = ParseExpression(expressionNode);
 
         return new LetStatement(variableName, expression);
     }
 
-    public static IStatement ParseNextStatement(ParseTreeNode node)
+    private static IStatement ParseNextStatement(ParseTreeNode node)
     {
         var variableNode = node.ChildNodes[1];
         var variableName = variableNode.Token.ValueString;
@@ -155,49 +164,28 @@ public class StatementParser
         return new NextStatement(variableName);
     }
 
-    public static IStatement ParsePrintStatement(ParseTreeNode node)
+    private static IStatement ParsePrintStatement(ParseTreeNode node)
     {
-        var printArguments = PrintArgumentParser.Parse(node.ChildNodes[1]);
+        var printArguments = ParsePrintArguments(node.ChildNodes[1]);
 
         return new PrintStatement(printArguments);
     }
 
-    public static IStatement ParseReturnStatement(ParseTreeNode node)
+    private static IStatement ParseReturnStatement(ParseTreeNode node)
     {
         return new ReturnStatement();
     }
-}
 
-
-public class LineNumberParser
-{
-    public static int Parse(ParseTreeNode node)
-    {
-        var lineNumberNode = node.ChildNodes[0];
-
-        var lineNumber = int.Parse(lineNumberNode.Token.ValueString);
-
-        return lineNumber;
-    }
-}
-
-public interface IStatementParser
-{
-    IStatement Parse(ParseTreeNode node);
-}
-
-public class EquationParser
-{
-    public static IEquation Parse(ParseTreeNode node)
+    private static IEquation ParseEquation(ParseTreeNode node)
     {
         var leftExpressionNode = node.ChildNodes[0];
         var inequalityNode = node.ChildNodes[1];
         var rightExpressionNode = node.ChildNodes[2];
 
-        var leftExpression = ExpressionParser.Parse(leftExpressionNode);
+        var leftExpression = ParseExpression(leftExpressionNode);
         var inequality = inequalityNode.Token.ValueString;
-        var rightExpression = ExpressionParser.Parse(rightExpressionNode);
-        
+        var rightExpression = ParseExpression(rightExpressionNode);
+
         return inequality switch
         {
             "==" => new EqualsEquation(leftExpression, rightExpression),
@@ -209,56 +197,50 @@ public class EquationParser
             _ => throw new NotImplementedException($"Unknown operator: {inequality}")
         };
     }
-}
 
-public class ExpressionParser
-{
-    public static IExpression Parse(ParseTreeNode node)
+    private static IExpression ParseExpression(ParseTreeNode node)
     {
         var expressionNode = node.ChildNodes[0];
         switch (expressionNode.Term.Name)
         {
             case "number":
                 var numberValue = int.Parse(expressionNode.Token.ValueString);
-                
+
                 return new NumberExpression(numberValue);
             case "varName":
                 var variableName = expressionNode.Token.ValueString;
 
                 return new VariableExpression(variableName);
             case "additionExpression":
-                var additionLeft = Parse(expressionNode.ChildNodes[0]);
-                var additionRight = Parse(expressionNode.ChildNodes[2]);
+                var additionLeft = ParseExpression(expressionNode.ChildNodes[0]);
+                var additionRight = ParseExpression(expressionNode.ChildNodes[2]);
 
                 return new AdditionExpression(additionLeft, additionRight);
             case "subtractionExpression":
-                var subtractionLeft = Parse(expressionNode.ChildNodes[0]);
-                var subtractionRight = Parse(expressionNode.ChildNodes[2]);
+                var subtractionLeft = ParseExpression(expressionNode.ChildNodes[0]);
+                var subtractionRight = ParseExpression(expressionNode.ChildNodes[2]);
 
                 return new SubtractionExpression(subtractionLeft, subtractionRight);
             case "multiplicationExpression":
-                var multiplicationLeft = Parse(expressionNode.ChildNodes[0]);
-                var multiplicationRight = Parse(expressionNode.ChildNodes[2]);
+                var multiplicationLeft = ParseExpression(expressionNode.ChildNodes[0]);
+                var multiplicationRight = ParseExpression(expressionNode.ChildNodes[2]);
 
                 return new MultiplicationExpression(multiplicationLeft, multiplicationRight);
             case "divisionExpression":
-                var divisionLeft = Parse(expressionNode.ChildNodes[0]);
-                var divisionRight = Parse(expressionNode.ChildNodes[2]);
- 
+                var divisionLeft = ParseExpression(expressionNode.ChildNodes[0]);
+                var divisionRight = ParseExpression(expressionNode.ChildNodes[2]);
+
                 return new DivisionExpression(divisionLeft, divisionRight);
             case "parenthesisExpression":
-                var parenthesisExpression = Parse(expressionNode.ChildNodes[1]);
+                var parenthesisExpression = ParseExpression(expressionNode.ChildNodes[1]);
 
                 return parenthesisExpression;
         }
-        
+
         throw new NotImplementedException();
     }
-}
 
-public class PrintArgumentParser
-{
-    public static PrintArgument[] Parse(ParseTreeNode node)
+    private static PrintArgument[] ParsePrintArguments(ParseTreeNode node)
     {
         var printArguments = new List<PrintArgument>();
 
@@ -267,7 +249,7 @@ public class PrintArgumentParser
             switch (argNode.Term.Name)
             {
                 case "printArguments":
-                    var newPrintArguments = Parse(argNode);
+                    var newPrintArguments = ParsePrintArguments(argNode);
                     printArguments.AddRange(newPrintArguments);
                     break;
                 case "argSeparator":
@@ -292,7 +274,7 @@ public class PrintArgumentParser
                             printArguments.Add(printArgument);
                             break;
                         case "expression":
-                            var expression = ExpressionParser.Parse(printArgumentNode);
+                            var expression = ParseExpression(printArgumentNode);
                             printArgument = PrintArgument.FromExpression(expression);
                             printArguments.Add(printArgument);
                             break;
