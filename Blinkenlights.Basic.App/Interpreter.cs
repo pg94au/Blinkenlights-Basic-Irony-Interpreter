@@ -70,6 +70,11 @@ public class Interpreter
         }
     }
 
+    public void ExecuteStatement(IStatement statement)
+    {
+        statement.Execute(this);
+    }
+
     public bool Finished => _currentLineNumber == int.MaxValue;
 
     public void GotoLine(int targetLine)
@@ -91,7 +96,7 @@ public class Interpreter
 
     private static SortedDictionary<int, IStatement>? ParseStatementsFromProgramText(string program, TextWriter outputwriter, TextWriter errorWriter)
     {
-        var statementParser = new StatementParser();
+        var statementParser = new StatementParser(errorWriter);
         var statements = statementParser.Parse(program, outputwriter, errorWriter);
 
         return statements;

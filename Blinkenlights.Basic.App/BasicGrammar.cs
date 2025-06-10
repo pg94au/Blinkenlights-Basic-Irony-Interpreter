@@ -54,6 +54,8 @@ public class BasicGrammar : Grammar
                    expression + "<=" + expression
         };
 
+        var statement = new NonTerminal(Statement);
+
         var endStatement = new NonTerminal("endStatement")
         {
             Rule = ToTerm("END")
@@ -72,7 +74,7 @@ public class BasicGrammar : Grammar
         };
         var ifStatement = new NonTerminal("ifStatement")
         {
-            Rule = ToTerm("IF") + equation + "THEN" + integerValue
+            Rule = ToTerm("IF") + equation + "THEN" + (statement | integerValue)
         };
         var inputStatement = new NonTerminal("inputStatement")
         {
@@ -102,19 +104,17 @@ public class BasicGrammar : Grammar
             Rule = ToTerm("RETURN")
         };
 
-        var statement = new NonTerminal(Statement)
-        {
-            Rule = endStatement |
-                   forStatement |
-                   gosubStatement |
-                   gotoStatement |
-                   ifStatement |
-                   inputStatement |
-                   letStatement |
-                   nextStatement |
-                   printStatement |
-                   returnStatement
-        };
+        statement.Rule = endStatement |
+                         forStatement |
+                         gosubStatement |
+                         gotoStatement |
+                         ifStatement |
+                         inputStatement |
+                         letStatement |
+                         nextStatement |
+                         printStatement |
+                         returnStatement
+                         ;
 
         var lineNum = new NonTerminal(LineNumber)
         {

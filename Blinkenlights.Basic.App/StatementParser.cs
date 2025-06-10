@@ -7,20 +7,29 @@ using Irony.Parsing;
 namespace Blinkenlights.Basic.App;
 public class StatementParser
 {
-    private readonly Dictionary<string, Func<ParseTreeNode, IStatement>> _statementParseFuncs = new()
+    private readonly Dictionary<string, Func<ParseTreeNode, IStatement>> _statementParseFuncs;
+
+    private readonly TextWriter _error;
+
+    public StatementParser(TextWriter error)
     {
-        { "endStatement", ParseEndStatement },
-        { "forStatement", ParseForStatement },
-        { "gosubStatement", ParseGosubStatement },
-        { "gotoStatement", ParseGotoStatement },
-        { "ifStatement", ParseIfStatement },
-        { "inputStatement", ParseInputStatement },
-        { "letStatement", ParseLetStatement },
-        { "nextStatement", ParseNextStatement },
-        { "printStatement", ParsePrintStatement },
-        { "returnStatement", ParseReturnStatement }
-    };
-    
+        _error = error;
+
+        _statementParseFuncs = new()
+        {
+            { "endStatement", ParseEndStatement },
+            { "forStatement", ParseForStatement },
+            { "gosubStatement", ParseGosubStatement },
+            { "gotoStatement", ParseGotoStatement },
+            { "ifStatement", ParseIfStatement },
+            { "inputStatement", ParseInputStatement },
+            { "letStatement", ParseLetStatement },
+            { "nextStatement", ParseNextStatement },
+            { "printStatement", ParsePrintStatement },
+            { "returnStatement", ParseReturnStatement }
+        };
+    }
+
     public SortedDictionary<int, IStatement>? Parse(string source, TextWriter output, TextWriter error)
     {
         var grammar = new BasicGrammar();
@@ -118,14 +127,31 @@ public class StatementParser
         return new GotoStatement(gotoLineNumber);
     }
 
-    private static IStatement ParseIfStatement(ParseTreeNode node)
+    private IStatement ParseIfStatement(ParseTreeNode node)
     {
         var equationNode = node.ChildNodes[1];
-        var targetLineNumberNode = node.ChildNodes[3];
         var equation = ParseEquation(equationNode);
-        var targetLineNumber = int.Parse(targetLineNumberNode.Token.ValueString);
 
-        return new IfStatement(equation, targetLineNumber);
+        var targetNode = node.ChildNodes[3].ChildNodes[0];
+        if (targetNode.Term.Name == "statement")
+        {
+            var statementParseFunc = _statementParseFuncs[targetNode.ChildNodes[0].Term.Name];
+
+            var statement = statementParseFunc(targetNode.ChildNodes[0]);
+
+            if (statement is ForStatement or NextStatement)
+            {
+                _error.WriteLine($"Illegal statement used with IF: {statement.GetType().Name}");
+            }
+
+            return new IfStatement(equation, statement);
+        }
+        else
+        {
+            var targetLineNumber = int.Parse(targetNode.Token.ValueString);
+
+            return new IfStatement(equation, targetLineNumber);
+        }
     }
 
     private static IStatement ParseInputStatement(ParseTreeNode node)
